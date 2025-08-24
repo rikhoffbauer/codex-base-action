@@ -118,7 +118,7 @@ runs:
 
     - name: Install Claude Code
       shell: bash
-      run: curl -fsSL https://claude.ai/install.sh | bash -s 1.0.89
+      run: curl -fsSL https://claude.ai/install.sh | bash -s 1.0.90
 
     - name: Run Claude Code Action
       shell: bash
