@@ -13,7 +13,6 @@ async function run() {
     await setupClaudeCodeSettings(
       process.env.INPUT_SETTINGS,
       undefined, // homeDir
-      process.env.INPUT_EXPERIMENTAL_SLASH_COMMANDS_DIR,
     );
 
     const promptConfig = await preparePrompt({
@@ -22,6 +21,7 @@ async function run() {
     });
 
     await runClaude(promptConfig.path, {
+      claudeArgs: process.env.INPUT_CLAUDE_ARGS,
       allowedTools: process.env.INPUT_ALLOWED_TOOLS,
       disallowedTools: process.env.INPUT_DISALLOWED_TOOLS,
       maxTurns: process.env.INPUT_MAX_TURNS,
