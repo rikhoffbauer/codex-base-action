@@ -1,136 +1,89 @@
-# Contributing to Claude Code Base Action
+# Contributing to Codex CLI Base Action
 
-Thank you for your interest in contributing to Claude Code Base Action! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to the Codex CLI Base Action! This document covers the basics of setting up a local development environment and the conventions we follow for changes.
 
-## Getting Started
+## Getting started
 
 ### Prerequisites
 
 - [Bun](https://bun.sh/) runtime
-- [Docker](https://www.docker.com/) (for running GitHub Actions locally)
-- [act](https://github.com/nektos/act) (installed automatically by our test script)
-- An Anthropic API key (for testing)
+- [Docker](https://www.docker.com/) (required to run GitHub Actions locally with [`act`](https://github.com/nektos/act))
+- Either a paid ChatGPT plan (with the ability to export `~/.codex/auth.json`) or an OpenAI API key (needed when testing the action end-to-end)
 
-### Setup
+### Repository setup
 
-1. Fork the repository on GitHub and clone your fork:
+```bash
+git clone https://github.com/your-username/codex-base-action.git
+cd codex-base-action
+bun install
+```
 
-   ```bash
-   git clone https://github.com/your-username/claude-code-base-action.git
-   cd claude-code-base-action
-   ```
+Set your preferred authentication method when running integration tests locally:
 
-2. Install dependencies:
+```bash
+# Option 1: Usage-based billing
+export OPENAI_API_KEY="sk-your-api-key"
 
-   ```bash
-   bun install
-   ```
+# Option 2: Paid ChatGPT plan
+export CHATGPT_AUTH_JSON="$(cat ~/.codex/auth.json)"
+```
 
-3. Set up your Anthropic API key:
-   ```bash
-   export ANTHROPIC_API_KEY="your-api-key-here"
-   ```
+## Development workflow
 
-## Development
+### Useful scripts
 
-### Available Scripts
+- `bun test` – run all tests
+- `bun run typecheck` – perform TypeScript type checking
+- `bun run format` – format the codebase with Prettier
+- `bun run format:check` – verify formatting without applying changes
 
-- `bun test` - Run all tests
-- `bun run typecheck` - Type check the code
-- `bun run format` - Format code with Prettier
-- `bun run format:check` - Check code formatting
+### Testing locally
 
-## Testing
+Run unit tests:
 
-### Running Tests Locally
+```bash
+bun test
+```
 
-1. **Unit Tests**:
+Run the composite action in a local GitHub Actions runner:
 
-   ```bash
-   bun test
-   ```
+```bash
+./test-local.sh
+```
 
-2. **Integration Tests** (using GitHub Actions locally):
+The script installs `act` on-demand (Homebrew is required on macOS) and executes the sample workflow inside Docker. Ensure Docker is running before invoking the script.
 
-   ```bash
-   ./test-local.sh
-   ```
+## Pull request process
 
-   This script:
+1. Create a feature branch from `main`.
+2. Make your changes and include tests when applicable.
+3. Run `bun test`, `bun run typecheck`, and `bun run format:check`.
+4. Commit with conventional messages (e.g., `feat: add codex args parsing`).
+5. Push your branch and open a pull request.
+6. Wait for CI to pass and request a review from maintainers.
 
-   - Installs `act` if not present (requires Homebrew on macOS)
-   - Runs the GitHub Action workflow locally using Docker
-   - Requires your `ANTHROPIC_API_KEY` to be set
+## Working on the action
 
-   On Apple Silicon Macs, the script automatically adds the `--container-architecture linux/amd64` flag to avoid compatibility issues.
+When modifying behaviour that interacts with Codex CLI:
 
-## Pull Request Process
-
-1. Create a new branch from `main`:
-
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-2. Make your changes and commit them:
-
-   ```bash
-   git add .
-   git commit -m "feat: add new feature"
-   ```
-
-3. Run tests and formatting:
-
-   ```bash
-   bun test
-   bun run typecheck
-   bun run format:check
-   ```
-
-4. Push your branch and create a Pull Request:
-
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-
-5. Ensure all CI checks pass
-
-6. Request review from maintainers
-
-## Action Development
-
-### Testing Your Changes
-
-When modifying the action:
-
-1. Test locally with the test script:
-
-   ```bash
-   ./test-local.sh
-   ```
-
-2. Test in a real GitHub Actions workflow by:
-   - Creating a test repository
-   - Using your branch as the action source:
-     ```yaml
-     uses: your-username/claude-code-base-action@your-branch
-     ```
-
-### Debugging
-
-- Use `console.log` for debugging in development
-- Check GitHub Actions logs for runtime issues
-- Use `act` with `-v` flag for verbose output:
-  ```bash
-  act push -v --secret ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY"
+- Use `./test-local.sh` to execute the action end-to-end in a container.
+- Test changes in a real GitHub workflow by referencing your branch:
+  ```yaml
+    uses: your-username/codex-base-action@your-branch
   ```
+- Add logging with `console.log` if you need additional diagnostics.
+- Check the generated execution log (`${RUNNER_TEMP}/codex-execution-output.json`) for insights into Codex behaviour.
 
-## Common Issues
+## Troubleshooting
 
-### Docker Issues
+### Docker issues
 
-Make sure Docker is running before using `act`. You can check with:
+Ensure Docker is running before using `act`:
 
 ```bash
 docker ps
 ```
+
+### Authentication
+
+The action needs either `OPENAI_API_KEY` or `CHATGPT_AUTH_JSON` to authenticate Codex CLI. Double-check that the environment variable is available to the composite action or that your workflow passes the matching input (`openai_api_key` or `chatgpt_auth_json`) correctly.

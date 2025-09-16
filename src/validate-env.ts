@@ -1,54 +1,21 @@
 /**
- * Validates the environment variables required for running Claude Code
- * based on the selected provider (Anthropic API, AWS Bedrock, or Google Vertex AI)
+ * Validates the environment variables required for running Codex CLI
  */
 export function validateEnvironmentVariables() {
-  const useBedrock = process.env.CLAUDE_CODE_USE_BEDROCK === "1";
-  const useVertex = process.env.CLAUDE_CODE_USE_VERTEX === "1";
-  const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
-  const claudeCodeOAuthToken = process.env.CLAUDE_CODE_OAUTH_TOKEN;
+  const openaiApiKey = process.env.OPENAI_API_KEY?.trim();
+  const chatgptAuth =
+    (process.env.INPUT_CHATGPT_AUTH_JSON ??
+      process.env.CHATGPT_AUTH_JSON)?.trim();
 
-  const errors: string[] = [];
-
-  if (useBedrock && useVertex) {
-    errors.push(
-      "Cannot use both Bedrock and Vertex AI simultaneously. Please set only one provider.",
-    );
+  if (openaiApiKey && openaiApiKey.length > 0) {
+    return;
   }
 
-  if (!useBedrock && !useVertex) {
-    if (!anthropicApiKey && !claudeCodeOAuthToken) {
-      errors.push(
-        "Either ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN is required when using direct Anthropic API.",
-      );
-    }
-  } else if (useBedrock) {
-    const requiredBedrockVars = {
-      AWS_REGION: process.env.AWS_REGION,
-      AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
-      AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
-    };
-
-    Object.entries(requiredBedrockVars).forEach(([key, value]) => {
-      if (!value) {
-        errors.push(`${key} is required when using AWS Bedrock.`);
-      }
-    });
-  } else if (useVertex) {
-    const requiredVertexVars = {
-      ANTHROPIC_VERTEX_PROJECT_ID: process.env.ANTHROPIC_VERTEX_PROJECT_ID,
-      CLOUD_ML_REGION: process.env.CLOUD_ML_REGION,
-    };
-
-    Object.entries(requiredVertexVars).forEach(([key, value]) => {
-      if (!value) {
-        errors.push(`${key} is required when using Google Vertex AI.`);
-      }
-    });
+  if (chatgptAuth && chatgptAuth.length > 0) {
+    return;
   }
 
-  if (errors.length > 0) {
-    const errorMessage = `Environment variable validation failed:\n${errors.map((e) => `  - ${e}`).join("\n")}`;
-    throw new Error(errorMessage);
-  }
+  throw new Error(
+    "Provide either OPENAI_API_KEY or chatgpt_auth_json to authenticate Codex CLI.",
+  );
 }
