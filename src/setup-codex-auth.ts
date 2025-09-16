@@ -3,6 +3,14 @@ import { $ } from "bun";
 import { readFile, writeFile } from "fs/promises";
 import { homedir } from "os";
 
+/**
+ * Returns true if the given string is valid JSON.
+ *
+ * Attempts to parse `content` with JSON.parse and returns `true` on success, `false` if parsing throws.
+ *
+ * @param content - The string to validate as JSON.
+ * @returns Whether `content` is valid JSON text.
+ */
 function isJson(content: string): boolean {
   try {
     JSON.parse(content);
@@ -12,6 +20,19 @@ function isJson(content: string): boolean {
   }
 }
 
+/**
+ * Prepare and persist Codex (ChatGPT) authentication JSON to the user's ~/.codex/auth.json.
+ *
+ * If `authInput` is a JSON string it is used directly; otherwise `authInput` is treated as a file path
+ * and the file is read and validated as JSON. The function creates the target directory if needed,
+ * writes the JSON (ensuring a trailing newline) to `~/.codex/auth.json`, and marks the secret so it
+ * is masked in CI logs.
+ *
+ * @param authInput - Either a JSON string containing the auth data or a path to a file that contains JSON. If omitted or blank, the function returns without making changes.
+ * @param homeDir - Optional override of the home directory used to resolve the target path (defaults to the current user's home directory).
+ * @returns A promise that resolves once the auth file has been written (or immediately if `authInput` is blank).
+ * @throws Error If a provided file path cannot be read or if the resulting content is not valid JSON.
+ */
 export async function setupCodexAuth(
   authInput?: string,
   homeDir?: string,
