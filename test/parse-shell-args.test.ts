@@ -45,16 +45,15 @@ describe("shell-quote parseShellArgs", () => {
   });
 
   test("should handle complex real-world example", () => {
-    const input = `--max-turns 3 --mcp-config "/Users/john/config.json" --model claude-3-5-sonnet-latest --system-prompt 'You are helpful'`;
+    const input = `--full-auto --config sandbox.mode=\"workspace-write\" --model o4-mini --ask-for-approval never`;
     expect(parseShellArgs(input)).toEqual([
-      "--max-turns",
-      "3",
-      "--mcp-config",
-      "/Users/john/config.json",
+      "--full-auto",
+      "--config",
+      "sandbox.mode=workspace-write",
       "--model",
-      "claude-3-5-sonnet-latest",
-      "--system-prompt",
-      "You are helpful",
+      "o4-mini",
+      "--ask-for-approval",
+      "never",
     ]);
   });
 

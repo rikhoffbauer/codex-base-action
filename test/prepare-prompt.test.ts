@@ -7,7 +7,7 @@ import { unlink, writeFile, readFile, stat } from "fs/promises";
 describe("preparePrompt integration tests", () => {
   beforeEach(async () => {
     try {
-      await unlink("/tmp/claude-action/prompt.txt");
+      await unlink("/tmp/codex-action/prompt.txt");
     } catch {
       // Ignore if file doesn't exist
     }
@@ -15,7 +15,7 @@ describe("preparePrompt integration tests", () => {
 
   afterEach(async () => {
     try {
-      await unlink("/tmp/claude-action/prompt.txt");
+      await unlink("/tmp/codex-action/prompt.txt");
     } catch {
       // Ignore if file doesn't exist
     }
@@ -29,7 +29,7 @@ describe("preparePrompt integration tests", () => {
 
     const config = await preparePrompt(input);
 
-    expect(config.path).toBe("/tmp/claude-action/prompt.txt");
+    expect(config.path).toBe("/tmp/codex-action/prompt.txt");
     expect(config.type).toBe("inline");
 
     const fileContent = await readFile(config.path, "utf-8");

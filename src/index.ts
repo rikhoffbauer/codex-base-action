@@ -2,17 +2,23 @@
 
 import * as core from "@actions/core";
 import { preparePrompt } from "./prepare-prompt";
-import { runClaude } from "./run-claude";
-import { setupClaudeCodeSettings } from "./setup-claude-code-settings";
+import { runCodex } from "./run-codex";
+import { setupCodexAuth } from "./setup-codex-auth";
+import { setupCodexConfig } from "./setup-codex-config";
 import { validateEnvironmentVariables } from "./validate-env";
 
 async function run() {
   try {
     validateEnvironmentVariables();
 
-    await setupClaudeCodeSettings(
-      process.env.INPUT_SETTINGS,
+    await setupCodexConfig(
+      process.env.INPUT_CONFIG,
       undefined, // homeDir
+    );
+
+    await setupCodexAuth(
+      process.env.INPUT_CHATGPT_AUTH_JSON,
+      undefined,
     );
 
     const promptConfig = await preparePrompt({
@@ -20,19 +26,10 @@ async function run() {
       promptFile: process.env.INPUT_PROMPT_FILE || "",
     });
 
-    await runClaude(promptConfig.path, {
-      claudeArgs: process.env.INPUT_CLAUDE_ARGS,
-      allowedTools: process.env.INPUT_ALLOWED_TOOLS,
-      disallowedTools: process.env.INPUT_DISALLOWED_TOOLS,
-      maxTurns: process.env.INPUT_MAX_TURNS,
-      mcpConfig: process.env.INPUT_MCP_CONFIG,
-      systemPrompt: process.env.INPUT_SYSTEM_PROMPT,
-      appendSystemPrompt: process.env.INPUT_APPEND_SYSTEM_PROMPT,
-      claudeEnv: process.env.INPUT_CLAUDE_ENV,
-      fallbackModel: process.env.INPUT_FALLBACK_MODEL,
-      model: process.env.ANTHROPIC_MODEL,
-      pathToClaudeCodeExecutable:
-        process.env.INPUT_PATH_TO_CLAUDE_CODE_EXECUTABLE,
+    await runCodex(promptConfig.path, {
+      codexArgs: process.env.INPUT_CODEX_ARGS,
+      openaiApiKey: process.env.OPENAI_API_KEY,
+      pathToCodexExecutable: process.env.INPUT_PATH_TO_CODEX_EXECUTABLE,
     });
   } catch (error) {
     core.setFailed(`Action failed with error: ${error}`);

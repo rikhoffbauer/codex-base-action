@@ -1,11 +1,6 @@
-# ⚠️ This is a Mirror Repository
+# Codex CLI Base Action
 
-This repository is an automated mirror of the `base-action` directory from [anthropics/claude-code-action](https://github.com/anthropics/claude-code-action).
+This repository contains the source for the Codex CLI GitHub Action. It is not a mirror of the former Claude Code action.
 
-**Do not submit PRs or issues to this repository.** Instead, please contribute to the main repository:
-
-- 🐛 [Report issues](https://github.com/anthropics/claude-code-action/issues)
-- 🔧 [Submit pull requests](https://github.com/anthropics/claude-code-action/pulls)
-- 📖 [View documentation](https://github.com/anthropics/claude-code-action#readme)
-
----
+- 🐛 [Report issues](https://github.com/openai/codex/issues)
+- 📖 [Codex CLI documentation](https://developers.openai.com/codex/cli)
