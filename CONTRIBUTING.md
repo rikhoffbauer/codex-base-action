@@ -69,7 +69,7 @@ When modifying behaviour that interacts with Codex CLI:
 - Use `./test-local.sh` to execute the action end-to-end in a container.
 - Test changes in a real GitHub workflow by referencing your branch:
   ```yaml
-  uses: your-username/codex-base-action@your-branch
+    uses: your-username/codex-base-action@your-branch
   ```
 - Add logging with `console.log` if you need additional diagnostics.
 - Check the generated execution log (`${RUNNER_TEMP}/codex-execution-output.json`) for insights into Codex behaviour.

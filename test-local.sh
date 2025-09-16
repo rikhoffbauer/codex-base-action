@@ -10,18 +10,26 @@ fi
 # Provide OPENAI_API_KEY or CHATGPT_AUTH_JSON before executing this script
 echo "Running action locally with act..."
 
-secrets=()
-if [ -n "${OPENAI_API_KEY:-}" ]; then
-    secrets+=(--secret OPENAI_API_KEY="$OPENAI_API_KEY")
-fi
-
-if [ -n "${CHATGPT_AUTH_JSON:-}" ]; then
-    secrets+=(--secret CHATGPT_AUTH_JSON="$CHATGPT_AUTH_JSON")
-fi
-
-if [ ${#secrets[@]} -eq 0 ]; then
+if [ -z "${OPENAI_API_KEY:-}" ] && [ -z "${CHATGPT_AUTH_JSON:-}" ]; then
     echo "Set OPENAI_API_KEY or CHATGPT_AUTH_JSON before running this script." >&2
     exit 1
 fi
 
-act push "${secrets[@]}" -W .github/workflows/test-base-action.yml --container-architecture linux/amd64
+tmp_secrets="$(mktemp)"
+trap 'rm -f "$tmp_secrets"' EXIT
+chmod 600 "$tmp_secrets"
+
+if [ -n "${OPENAI_API_KEY:-}" ]; then
+    printf 'OPENAI_API_KEY=%s\n' "$OPENAI_API_KEY" >>"$tmp_secrets"
+fi
+
+if [ -n "${CHATGPT_AUTH_JSON:-}" ]; then
+    printf 'CHATGPT_AUTH_JSON=%s\n' "$CHATGPT_AUTH_JSON" >>"$tmp_secrets"
+fi
+
+if [ ! -s "$tmp_secrets" ]; then
+    echo "Failed to capture secrets for act run." >&2
+    exit 1
+fi
+
+act push --secret-file "$tmp_secrets" -W .github/workflows/test-base-action.yml --container-architecture linux/amd64

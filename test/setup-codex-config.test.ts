@@ -7,7 +7,11 @@ import { tmpdir } from "os";
 import { mkdir, writeFile, readFile, rm } from "fs/promises";
 import { join } from "path";
 
-const testHomeDir = join(tmpdir(), "codex-cli-test-home", Date.now().toString());
+const testHomeDir = join(
+  tmpdir(),
+  "codex-cli-test-home",
+  `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+);
 const configPath = join(testHomeDir, ".codex", "config.toml");
 const testConfigDir = join(testHomeDir, "codex-config-source");
 const testConfigPath = join(testConfigDir, "config.toml");
@@ -67,12 +71,16 @@ model = "o3"
     });
   });
 
-  test("should throw error for invalid TOML string", () => {
-    expect(() => setupCodexConfig("invalid = {", testHomeDir)).toThrow();
+  test("should throw error for invalid TOML string", async () => {
+    await expect(
+      setupCodexConfig("invalid = {", testHomeDir),
+    ).rejects.toThrow();
   });
 
-  test("should throw error for non-existent file path", () => {
-    expect(() => setupCodexConfig("/non/existent/config.toml", testHomeDir)).toThrow();
+  test("should throw error for non-existent file path", async () => {
+    await expect(
+      setupCodexConfig("/non/existent/config.toml", testHomeDir),
+    ).rejects.toThrow();
   });
 
   test("should ignore empty string input", async () => {

@@ -53,11 +53,18 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Setup Node.js
+    - name: Setup Node.js (with cache)
+      if: inputs.use_node_cache == 'true'
       uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
       with:
-        node-version: ${{ env.NODE_VERSION || '18.x' }}
-        cache: ${{ inputs.use_node_cache == 'true' && 'npm' || '' }}
+        node-version: ${{ env.NODE_VERSION || '20.x' }}
+        cache: npm
+
+    - name: Setup Node.js
+      if: inputs.use_node_cache != 'true'
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version: ${{ env.NODE_VERSION || '20.x' }}
 
     - name: Install Bun
       if: inputs.path_to_bun_executable == ''
@@ -72,6 +79,7 @@ runs:
         echo "Using custom Bun executable: ${{ inputs.path_to_bun_executable }}"
         BUN_DIR=$(dirname "${{ inputs.path_to_bun_executable }}")
         echo "$BUN_DIR" >> "$GITHUB_PATH"
+        bun --version
 
     - name: Install Dependencies
       shell: bash
@@ -84,23 +92,36 @@ runs:
       run: |
         if [ -z "${{ inputs.path_to_codex_executable }}" ]; then
           echo "Installing Codex CLI..."
-          npm install -g @openai/codex
+          npm install -g @openai/codex@0.36.0
           codex --version
         else
           echo "Using custom Codex executable: ${{ inputs.path_to_codex_executable }}"
           CODEX_DIR=$(dirname "${{ inputs.path_to_codex_executable }}")
           echo "$CODEX_DIR" >> "$GITHUB_PATH"
+          codex --version
         fi
+
+    - name: Mask credentials
+      shell: bash
+      run: |
+        [ -n "${{ inputs.openai_api_key }}" ] && echo "::add-mask::${{ inputs.openai_api_key }}"
+        [ -n "${{ inputs.chatgpt_auth_json }}" ] && echo "::add-mask::${{ inputs.chatgpt_auth_json }}"
 
     - name: Run Codex CLI Action
       shell: bash
       id: run_codex
       run: |
-        if [ -n "$CODEX_WORKING_DIR" ]; then
+        set -Eeuo pipefail
+        if [ -n "${CODEX_WORKING_DIR:-}" ]; then
           echo "Changing directory to CODEX_WORKING_DIR: $CODEX_WORKING_DIR"
-          cd "$CODEX_WORKING_DIR"
+          if [ -d "$CODEX_WORKING_DIR" ]; then
+            cd "$CODEX_WORKING_DIR"
+          else
+            echo "ERROR: CODEX_WORKING_DIR does not exist: $CODEX_WORKING_DIR" >&2
+            exit 1
+          fi
         fi
-        bun run ${GITHUB_ACTION_PATH}/src/index.ts
+        bun run "${GITHUB_ACTION_PATH}/src/index.ts"
       env:
         INPUT_PROMPT: ${{ inputs.prompt }}
         INPUT_PROMPT_FILE: ${{ inputs.prompt_file }}

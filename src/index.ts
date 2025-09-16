@@ -11,15 +11,29 @@ async function run() {
   try {
     validateEnvironmentVariables();
 
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    if (openaiApiKey) {
+      core.setSecret(openaiApiKey);
+      const trimmedKey = openaiApiKey.trim();
+      if (trimmedKey && trimmedKey !== openaiApiKey) {
+        core.setSecret(trimmedKey);
+      }
+    }
+
     await setupCodexConfig(
       process.env.INPUT_CONFIG,
       undefined, // homeDir
     );
 
-    await setupCodexAuth(
-      process.env.INPUT_CHATGPT_AUTH_JSON,
-      undefined,
-    );
+    try {
+      await setupCodexAuth(
+        process.env.INPUT_CHATGPT_AUTH_JSON,
+        undefined,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Authentication setup failed: ${message}`);
+    }
 
     const promptConfig = await preparePrompt({
       prompt: process.env.INPUT_PROMPT || "",

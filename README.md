@@ -72,6 +72,9 @@ To customise Codex CLI defaults, supply a TOML config string or a path to a conf
 | `path_to_codex_executable` | Path to a pre-installed Codex CLI binary. When provided the automatic npm installation is skipped. | No | `""` |
 | `path_to_bun_executable` | Path to a custom Bun binary if you need to override the bundled version. | No | `""` |
 
+> [!NOTE]
+> By default the action installs `@openai/codex@0.36.0` when a custom executable is not supplied.
+
 \* Either `prompt` or `prompt_file` must be provided, but not both.
 
 ## Outputs
@@ -87,7 +90,7 @@ The following optional environment variables influence the composite action:
 
 | Variable | Description | Default |
 | -------- | ----------- | ------- |
-| `NODE_VERSION` | Node.js version passed to `actions/setup-node`. | `18.x` |
+| `NODE_VERSION` | Node.js version passed to `actions/setup-node`. | `20.x` |
 | `CODEX_WORKING_DIR` | Directory to `cd` into before running the action. Useful when you want Codex to operate in a subfolder. | Workspace root |
 
 ## Authentication

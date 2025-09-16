@@ -1,9 +1,8 @@
-import { $ } from "bun";
 import { homedir } from "os";
-import { readFile, writeFile } from "fs/promises";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import { parse as parseToml, stringify as stringifyToml } from "@iarna/toml";
 
-type TomlRecord = Record<string, unknown>;
+type TomlRecord = Awaited<ReturnType<typeof parseToml>>;
 
 function deepMerge(base: TomlRecord, override: TomlRecord): TomlRecord {
   const result: TomlRecord = { ...base };
@@ -39,14 +38,14 @@ export async function setupCodexConfig(
 
   console.log(`Setting up Codex config at: ${configPath}`);
 
-  await $`mkdir -p ${configDir}`.quiet();
+  await mkdir(configDir, { recursive: true });
 
   let config: TomlRecord = {};
 
   try {
     const existing = await readFile(configPath, "utf-8");
     if (existing.trim()) {
-      config = parseToml(existing) as TomlRecord;
+      config = parseToml(existing);
       console.log(
         `Found existing Codex config:`,
         JSON.stringify(config, null, 2),
@@ -63,7 +62,7 @@ export async function setupCodexConfig(
     let inputConfig: TomlRecord = {};
 
     try {
-      inputConfig = parseToml(configInput) as TomlRecord;
+      inputConfig = parseToml(configInput);
       console.log(`Parsed config input as TOML`);
     } catch (parseError) {
       console.log(
@@ -71,11 +70,13 @@ export async function setupCodexConfig(
       );
       try {
         const fileContent = await readFile(configInput, "utf-8");
-        inputConfig = parseToml(fileContent) as TomlRecord;
+        inputConfig = parseToml(fileContent);
         console.log(`Successfully read and parsed config from file`);
       } catch (fileError) {
-        console.error(`Failed to read or parse config file: ${fileError}`);
-        throw new Error(`Failed to process config input: ${fileError}`);
+        const errorMessage =
+          fileError instanceof Error ? fileError.message : String(fileError);
+        console.error(`Failed to read or parse config file: ${errorMessage}`);
+        throw new Error(`Failed to process config input: ${errorMessage}`);
       }
     }
 
@@ -83,7 +84,7 @@ export async function setupCodexConfig(
     console.log(`Merged config with input settings`);
   }
 
-  const serialized = stringifyToml(config as any);
+  const serialized = stringifyToml(config);
   await writeFile(configPath, serialized.endsWith("\n") ? serialized : `${serialized}\n`);
   console.log(`Config saved successfully`);
 }

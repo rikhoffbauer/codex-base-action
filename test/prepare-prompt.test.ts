@@ -3,11 +3,18 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import { preparePrompt, type PreparePromptInput } from "../src/prepare-prompt";
 import { unlink, writeFile, readFile, stat } from "fs/promises";
+import os from "node:os";
+import path from "node:path";
 
 describe("preparePrompt integration tests", () => {
+  const promptPath = () => {
+    const baseTmp = process.env.RUNNER_TEMP?.trim() ?? os.tmpdir();
+    return path.join(baseTmp, "codex-action", "prompt.txt");
+  };
+
   beforeEach(async () => {
     try {
-      await unlink("/tmp/codex-action/prompt.txt");
+      await unlink(promptPath());
     } catch {
       // Ignore if file doesn't exist
     }
@@ -15,7 +22,7 @@ describe("preparePrompt integration tests", () => {
 
   afterEach(async () => {
     try {
-      await unlink("/tmp/codex-action/prompt.txt");
+      await unlink(promptPath());
     } catch {
       // Ignore if file doesn't exist
     }
@@ -29,7 +36,7 @@ describe("preparePrompt integration tests", () => {
 
     const config = await preparePrompt(input);
 
-    expect(config.path).toBe("/tmp/codex-action/prompt.txt");
+    expect(config.path).toBe(promptPath());
     expect(config.type).toBe("inline");
 
     const fileContent = await readFile(config.path, "utf-8");
@@ -40,7 +47,7 @@ describe("preparePrompt integration tests", () => {
   });
 
   test("should use existing file when promptFile is provided", async () => {
-    const testFilePath = "/tmp/test-prompt.txt";
+    const testFilePath = path.join(os.tmpdir(), "test-prompt.txt");
     await writeFile(testFilePath, "Prompt from file");
 
     const input: PreparePromptInput = {
@@ -68,18 +75,19 @@ describe("preparePrompt integration tests", () => {
   });
 
   test("should fail when promptFile points to non-existent file", async () => {
+    const missingPath = path.join(os.tmpdir(), "non-existent-file.txt");
     const input: PreparePromptInput = {
       prompt: "",
-      promptFile: "/tmp/non-existent-file.txt",
+      promptFile: missingPath,
     };
 
     await expect(preparePrompt(input)).rejects.toThrow(
-      "Prompt file '/tmp/non-existent-file.txt' does not exist.",
+      `Prompt file '${missingPath}' does not exist.`,
     );
   });
 
   test("should fail when prompt is empty", async () => {
-    const emptyFilePath = "/tmp/empty-prompt.txt";
+    const emptyFilePath = path.join(os.tmpdir(), "empty-prompt.txt");
     await writeFile(emptyFilePath, "");
 
     const input: PreparePromptInput = {
@@ -97,7 +105,7 @@ describe("preparePrompt integration tests", () => {
   });
 
   test("should fail when both prompt and promptFile are provided", async () => {
-    const testFilePath = "/tmp/test-prompt.txt";
+    const testFilePath = path.join(os.tmpdir(), "test-prompt.txt");
     await writeFile(testFilePath, "Prompt from file");
 
     const input: PreparePromptInput = {

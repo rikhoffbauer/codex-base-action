@@ -45,7 +45,7 @@ describe("shell-quote parseShellArgs", () => {
   });
 
   test("should handle complex real-world example", () => {
-    const input = `--full-auto --config sandbox.mode=\"workspace-write\" --model o4-mini --ask-for-approval never`;
+    const input = `--full-auto --config sandbox.mode="workspace-write" --model o4-mini --ask-for-approval never`;
     expect(parseShellArgs(input)).toEqual([
       "--full-auto",
       "--config",

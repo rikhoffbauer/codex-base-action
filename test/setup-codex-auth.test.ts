@@ -16,7 +16,11 @@ import * as core from "@actions/core";
 import { setupCodexAuth } from "../src/setup-codex-auth";
 
 function uniqueHomeDir() {
-  return join(tmpdir(), "codex-auth-tests", Date.now().toString(), Math.random().toString(36).slice(2));
+  return join(
+    tmpdir(),
+    "codex-auth-tests",
+    `${Date.now()}-${process.pid}-${Math.random().toString(36).slice(2)}`,
+  );
 }
 
 describe("setupCodexAuth", () => {

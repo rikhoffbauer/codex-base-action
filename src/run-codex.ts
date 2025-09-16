@@ -67,13 +67,15 @@ async function ensureCodexLogin(
   env: Record<string, string>,
   openaiApiKey: string,
 ) {
-  if (!openaiApiKey.trim()) {
+  const trimmedKey = openaiApiKey.trim();
+  if (!trimmedKey) {
+    console.log("No OpenAI API key provided, skipping login");
     return;
   }
 
   const loginProcess = spawn(
     executable,
-    ["login", "--api-key", openaiApiKey],
+    ["login", "--api-key", trimmedKey],
     {
       stdio: ["ignore", "ignore", "pipe"],
       env: {
@@ -111,7 +113,7 @@ export async function runCodex(promptPath: string, options: CodexOptions) {
 
   const codexExecutable = options.pathToCodexExecutable || "codex";
 
-  if (options.openaiApiKey?.trim()) {
+  if (options.openaiApiKey) {
     await ensureCodexLogin(codexExecutable, config.env, options.openaiApiKey);
   }
 
@@ -196,14 +198,22 @@ export async function runCodex(promptPath: string, options: CodexOptions) {
   });
 
   const exitCode = await new Promise<number>((resolve) => {
-    codexProcess.on("close", (code) => {
+    let resolved = false;
+    const finish = (code: number) => {
+      if (resolved) {
+        return;
+      }
+      resolved = true;
       flushBuffer(true);
-      resolve(code ?? 0);
+      resolve(code);
+    };
+
+    codexProcess.on("close", (code) => {
+      finish(code ?? 0);
     });
 
     codexProcess.on("error", () => {
-      flushBuffer(true);
-      resolve(1);
+      finish(1);
     });
   });
 

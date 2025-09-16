@@ -1,6 +1,5 @@
 import * as core from "@actions/core";
-import { $ } from "bun";
-import { readFile, writeFile } from "fs/promises";
+import { mkdir, readFile, writeFile, chmod } from "fs/promises";
 import { homedir } from "os";
 
 function isJson(content: string): boolean {
@@ -25,7 +24,7 @@ export async function setupCodexAuth(
   const authDir = `${home}/.codex`;
   const authPath = `${authDir}/auth.json`;
 
-  await $`mkdir -p ${authDir}`.quiet();
+  await mkdir(authDir, { recursive: true });
 
   let authContent = authInput;
 
@@ -56,6 +55,7 @@ export async function setupCodexAuth(
     ? authContent
     : `${authContent}\n`;
 
-  await writeFile(authPath, output);
+  await writeFile(authPath, output, { mode: 0o600 });
+  await chmod(authPath, 0o600);
   console.log(`Codex auth saved to ${authPath}`);
 }

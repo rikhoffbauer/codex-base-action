@@ -1,5 +1,7 @@
 import { existsSync, statSync } from "fs";
 import { mkdir, writeFile } from "fs/promises";
+import os from "node:os";
+import path from "node:path";
 
 export type PreparePromptInput = {
   prompt: string;
@@ -52,7 +54,8 @@ async function validateAndPreparePrompt(
     throw new Error("Prompt is empty. Please provide a non-empty prompt.");
   }
 
-  const inlinePath = "/tmp/codex-action/prompt.txt";
+  const baseTmp = process.env.RUNNER_TEMP?.trim() || os.tmpdir();
+  const inlinePath = path.join(baseTmp, "codex-action", "prompt.txt");
   return {
     type: "inline",
     path: inlinePath,
@@ -64,8 +67,7 @@ async function createTemporaryPromptFile(
   promptPath: string,
 ): Promise<void> {
   // Create the directory path
-  const dirPath = promptPath.substring(0, promptPath.lastIndexOf("/"));
-  await mkdir(dirPath, { recursive: true });
+  await mkdir(path.dirname(promptPath), { recursive: true });
   await writeFile(promptPath, prompt);
 }
 
