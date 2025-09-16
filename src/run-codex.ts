@@ -219,6 +219,6 @@ export async function runCodex(promptPath: string, options: CodexOptions) {
     core.setOutput("conclusion", "success");
   } else {
     core.setOutput("conclusion", "failure");
-    process.exit(exitCode);
+    throw new Error(`Codex CLI process exited with code ${exitCode}`);
   }
 }
