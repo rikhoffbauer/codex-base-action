@@ -21,10 +21,40 @@ type PreparedConfig = {
   executionFile: string;
 };
 
+/**
+ * Checks whether a command-line flag is present in an argument list.
+ *
+ * The function returns true if any element of `args` is exactly `flag`
+ * or begins with `flag=` (to cover `--option=value` style).
+ *
+ * @param args - Array of command-line arguments to search.
+ * @param flag - Flag to look for (e.g., `"--json"` or `"--option"`).
+ * @returns True if `flag` is present exactly or as a `flag=...` prefixed argument.
+ */
 function hasArgument(args: string[], flag: string): boolean {
   return args.some((arg) => arg === flag || arg.startsWith(`${flag}=`));
 }
 
+/**
+ * Prepare the configuration needed to run the Codex CLI for a given prompt file.
+ *
+ * Builds the argument list for `codex` (starting with `exec`), appends any
+ * user-provided shell-parsed `options.codexArgs`, ensures `--json` is present,
+ * and ensures stdin is used (`-`) so the prompt file can be piped in.
+ *
+ * The returned config also includes a minimal custom environment that copies
+ * `INPUT_ACTION_INPUTS_PRESENT` from the process environment to
+ * `GITHUB_ACTION_INPUTS` when present, and the path where execution events
+ * should be written (EXECUTION_FILE).
+ *
+ * @param promptPath - Filesystem path to the prepared prompt that will be piped to codex stdin.
+ * @param options - Optional runner options; if `options.codexArgs` is provided it is parsed as shell args and merged.
+ * @returns A PreparedConfig containing:
+ *  - codexArgs: finalized argv array to pass to the codex executable,
+ *  - promptPath: the provided promptPath,
+ *  - env: custom environment variables to merge into the process environment,
+ *  - executionFile: path to the JSON file where execution events will be recorded.
+ */
 export function prepareRunConfig(
   promptPath: string,
   options: CodexOptions,
@@ -62,6 +92,19 @@ export function prepareRunConfig(
   };
 }
 
+/**
+ * Ensure the Codex CLI is logged in using the provided OpenAI API key.
+ *
+ * If `openaiApiKey` is empty or only whitespace, this function returns immediately.
+ * Otherwise it spawns `executable login --api-key <key>` with `env` merged into
+ * `process.env` and resolves when the login process exits with code `0`.
+ *
+ * @param executable - Path or command name of the Codex CLI to invoke for login
+ * @param env - Environment variables to merge with `process.env` for the spawned process
+ * @param openaiApiKey - OpenAI API key to supply to the CLI; blank value skips login
+ * @returns A promise that resolves when the login completes successfully
+ * @throws Error if the process cannot be spawned or if the login process exits with a non-zero code
+ */
 async function ensureCodexLogin(
   executable: string,
   env: Record<string, string>,
@@ -108,6 +151,19 @@ async function ensureCodexLogin(
   });
 }
 
+/**
+ * Run the Codex CLI with a prompt file, collect its JSON/text output events, and persist results for GitHub Actions.
+ *
+ * This function prepares the Codex command, optionally logs in with an OpenAI API key, streams the given prompt file
+ * to the Codex process stdin, and reads stdout line-by-line. Lines that parse as JSON are recorded as structured events;
+ * other lines are recorded as text events. All gathered events are written to the configured execution file, and
+ * GitHub Actions outputs `execution_file` (path to the log) and `conclusion` (`success` or `failure`) are set. If the
+ * Codex process exits with a non-zero code the function throws an Error.
+ *
+ * @param promptPath - Filesystem path to the prompt file that will be piped to Codex stdin.
+ * @param options - Runtime options (e.g., extra Codex arguments, OpenAI API key, or an alternate Codex executable).
+ * @returns A promise that resolves when the run completes successfully, or rejects if Codex exits with a non-zero code.
+ */
 export async function runCodex(promptPath: string, options: CodexOptions) {
   const config = prepareRunConfig(promptPath, options);
 

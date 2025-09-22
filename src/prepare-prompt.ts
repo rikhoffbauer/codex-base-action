@@ -13,6 +13,25 @@ export type PreparePromptConfig = {
   path: string;
 };
 
+/**
+ * Validate provided prompt inputs and produce a PreparePromptConfig describing how the prompt should be provided.
+ *
+ * If `input.promptFile` is supplied the function ensures the file exists and is non-empty, then returns
+ * `{ type: "file", path: input.promptFile }`. If an inline `input.prompt` is supplied and non-empty, the function
+ * returns `{ type: "inline", path: "/tmp/codex-action/prompt.txt" }`.
+ *
+ * @param input - Object containing either `prompt` (inline prompt text) or `promptFile` (path to an existing prompt file). Exactly one must be provided.
+ * @returns A PreparePromptConfig indicating `type` ("file" | "inline") and the filesystem `path` to the prompt.
+ * @throws Error when neither or both inputs are provided:
+ *   - "Neither 'prompt' nor 'prompt_file' was provided. At least one is required."
+ *   - "Both 'prompt' and 'prompt_file' were provided. Please specify only one."
+ * @throws Error when `promptFile` is provided but the file does not exist:
+ *   - "Prompt file '<path>' does not exist."
+ * @throws Error when `promptFile` exists but is empty:
+ *   - "Prompt file is empty. Please provide a non-empty prompt."
+ * @throws Error when an inline `prompt` is missing or only whitespace:
+ *   - "Prompt is empty. Please provide a non-empty prompt."
+ */
 async function validateAndPreparePrompt(
   input: PreparePromptInput,
 ): Promise<PreparePromptConfig> {

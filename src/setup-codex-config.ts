@@ -4,6 +4,17 @@ import { parse as parseToml, stringify as stringifyToml } from "@iarna/toml";
 
 type TomlRecord = Awaited<ReturnType<typeof parseToml>>;
 
+/**
+ * Recursively merges two TOML-like objects, returning a new merged object.
+ *
+ * Performs a deep, non-destructive merge: nested plain objects (non-array, non-Date)
+ * are merged recursively while primitives, arrays, and Date instances from `override`
+ * replace the corresponding values in `base`.
+ *
+ * @param base - The base configuration object (not mutated).
+ * @param override - The overriding object whose values take precedence.
+ * @returns A new object containing the merged result.
+ */
 function deepMerge(base: TomlRecord, override: TomlRecord): TomlRecord {
   const result: TomlRecord = { ...base };
 
@@ -28,6 +39,21 @@ function deepMerge(base: TomlRecord, override: TomlRecord): TomlRecord {
   return result;
 }
 
+/**
+ * Initialize and persist the Codex TOML configuration at `~/.codex/config.toml`.
+ *
+ * If an existing config file is present it is loaded and then optionally merged
+ * with `configInput`. `configInput` may be a TOML string or a path to a TOML
+ * file; parsed values are merged into the existing configuration (deep merge of
+ * nested table objects, non-object values overwrite). The resulting config is
+ * serialized to TOML and written to `~/.codex/config.toml` (creates `~/.codex`
+ * if needed).
+ *
+ * @param configInput - Optional TOML content or path to a TOML file to merge into the existing config.
+ * @param homeDir - Optional home directory override (defaults to the current user's home directory).
+ *
+ * @throws Error If `configInput` is treated as a file path but that file cannot be read or parsed as TOML.
+ */
 export async function setupCodexConfig(
   configInput?: string,
   homeDir?: string,
